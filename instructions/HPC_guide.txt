@@ -1,0 +1,17 @@
+This is for windows OS if you use mac you're on your own just use the instruction guide you can find online
+
+Need access to HPC from CWRU, can submit via email to HPC-support@case.edu
+
+For coursework CWRU allows access to the markov cluster, for research there is the poineer cluster
+you can access these via a web browser OnDemand
+    Pioneer:    https://ondemand-pioneer.case.edu
+    Markov:     https://ondemand-markov.case.edu 
+
+Once an acount is granted you need to download a couple things
+    x2go: https://wiki.x2go.org/doku.php/download:start
+        this gives you a windows-like UI like a remote desktop to interact with the cluster
+        IMPORTANTLY this is a login node, not a computing node, so DO NOT run code from here
+        You submit requests to run code on computing nodes from here
+
+we will use pioneer for this application because I have access to it and its better than marokv
+    

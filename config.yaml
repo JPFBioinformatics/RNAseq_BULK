@@ -1,0 +1,114 @@
+# basic sturcture is root then in there is src, config, tests and instructions/readme file
+# inside root there is runs subdirectory, we make a new subdirectory in there for every experiment where we have two subdirectories, one called data that holds all
+# the data_dir stuff and another called logs which holds all the logs for that run
+
+project:
+# project info
+  # name of your run
+  name: first_rna_seq
+
+reference:
+# locations of ref files used in pipeline, placed within a reference dir that is under project_name dir
+  genome_fasta: genome.fa
+  gtf_file: genes.gtf
+  star_index: star_index/
+
+data_dirs:
+# locations for differnt output directories, will all be under project_name dir where name: project_name in above project block of config.yaml
+  qc_reports: qc_reports/
+  counts: counts/
+  log_dir: logs/
+
+temp_dirs:
+# locations for temporary directories used in analysis pipeline
+  trimmed: trimmed/       # trimmed fastq files
+  aligned: aligned/       # aligned BAM files
+
+
+samples:
+# input later when we actually have data
+# make sure that each sample will output to a different path ie data/aligned/sample1 and data/aligned/sample2 to prevent collision
+
+params:
+
+  fastp:
+  # QC analysis and trimming of bad/short reads plus removing the adapter sequences
+
+    # minimum read length after trimming
+    min_length: 30
+    # Trim bases with Phred score < value, 20 = 1% error prob, 30 = 0.1% error prob, 10 = 10% error prob
+    quality_cutoff: 20
+    # automatically detect illumina adapters
+    auto_detect_adapter: true
+    # illumina adapter seq in case we need to manually specify
+    adapter_fwd: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
+    adapter_rev: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+
+    # number of cpu cores to use
+    threads: 4
+    # output directories for the qc report and trimmed files
+    outdir_qc: qc_reports
+    outdir_trim: trimmed
+
+  star:
+  # generates reference library and maps bulk sequencing data to genes in library (BAM files)
+  # may want to consider temp directories because STAR generates al ot of temp files and some clusters have fst scratch storage /scratch/$USER/
+
+    # keeps genome index in memory for aliging many samples
+    # only useful if running multiple jobs sequentially on the same node, otherwise Load is safer
+    genomLoad: LoadAndKeep
+    # Maximum number of multiple alignments, if a read maps to > value locations it is discarded
+    outFilterMultimapNmax: 20
+    # output format and sorting method
+    outSAMtype: BAM SortedByCoordinate
+    # improves junction detection, first pass builds splice junction database second pass uses it to improve alignment
+    twopassMode: Basic
+    # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
+    sjbdOverhang: 100
+    # maximum length of introl allowed when mapping reads, 1,000,000 is standard for mammals
+    alignIntronMax: 1000000
+
+    # optinal, controls ram used for sorting
+    # ram x threads must be <= SLURM --mem allocation
+    limitBAMsortRAM: 10GB
+    # optinal saves unmapped reads for manual inspection
+    outReadsUnmapped: false
+
+    # number of cpu cores to use
+    threads: 8
+    # output directory
+    outdir: aligned
+
+  samtools:
+  # sorts, indexes and handles BAM files output by STAR
+
+    # max memory per thread when sorting, 4G = 4GB per thread used to prevent out of memory errors
+    # sort_memory x threads must be <= SLURM --mem allocation
+    sort_memory: 4G
+    # wether or not to generate a .bai index for each BAM file, required true for viewing/using featureCounts
+    index_bam: true
+
+    # number of cpu cores to use
+    threads: 4
+
+  featurecounts:
+  # assigns aligned reads from BAM files to genes based on GTF annotation and generates gene expression counts
+
+    # attribute in GTF file that defines the gene (default is gene_id)
+    gtf_attr_type: gene_id
+    # what type of genomic feature we want to work with, either gene or exon
+    feature_type: exon
+    # 0=unstranded, 1=forward, 2=reverse, match your library prep
+    strand_specific: 0
+    # true if using paried end data false if using single end sequencing, based on your kit
+    isPairedEnd: true
+
+    # optional, assign reads to the feature with largest overlap
+    largestOverlap: false
+    # optional, requre a certain fraction of feature to overlap
+    farcOverlap: 0
+
+    # number of cpu cores to use
+    threads: 4
+    # output directory
+    outdir: counts

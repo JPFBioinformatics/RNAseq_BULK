@@ -1,0 +1,54 @@
+Requirements.TXT for bulk RNA sequencing data analysis
+
+FastP to produce QC reports and trim bad reads
+STAR to map lab-produced library to reference genome to produce reference index and map reads
+samtools to inspect/index BAM files from STAR
+subreads featureCounts to get counts for each sample and produce summary for further analysis
+
+Tutorials for packages:
+
+FastP
+
+STAR
+
+samtools
+
+featureCounts
+
+
+Samples for analysis:
+ DuoC_CGX_M1_S17_R1.fastq.gz   IleC_WT_M2_S5_R2.fastq.gz
+ DuoC_CGX_M1_S17_R2.fastq.gz   IleC_WT_M3_S8_R1.fastq.gz
+ DuoC_CGX_M2_S20_R1.fastq.gz   IleC_WT_M3_S8_R2.fastq.gz
+ DuoC_CGX_M2_S20_R2.fastq.gz   IleC_WT_M4_S11_R1.fastq.gz
+ DuoC_CGX_M3_S23_R1.fastq.gz   IleC_WT_M4_S11_R2.fastq.gz
+ DuoC_CGX_M3_S23_R2.fastq.gz   IleC_WT_M5_S14_R1.fastq.gz
+ DuoC_CGX_M4_S26_R1.fastq.gz   IleC_WT_M5_S14_R2.fastq.gz
+ DuoC_CGX_M4_S26_R2.fastq.gz  'Info related to Fastq files given to Jack 10-16-25.xlsx'
+ DuoC_CGX_M5_S29_R1.fastq.gz   JejC_CGX_M1_S17_R1.fastq.gz
+ DuoC_CGX_M5_S29_R2.fastq.gz   JejC_CGX_M1_S17_R2.fastq.gz
+ DuoC_WT_M1_S2_R1.fastq.gz     JejC_CGX_M2_S20_R1.fastq.gz
+ DuoC_WT_M1_S2_R2.fastq.gz     JejC_CGX_M2_S20_R2.fastq.gz
+ DuoC_WT_M2A_S5_R1.fastq.gz    JejC_CGX_M3_S23_R1.fastq.gz
+ DuoC_WT_M2A_S5_R2.fastq.gz    JejC_CGX_M3_S23_R2.fastq.gz
+ DuoC_WT_M4_S11_R1.fastq.gz    JejC_CGX_M4_S26_R1.fastq.gz
+ DuoC_WT_M4_S11_R2.fastq.gz    JejC_CGX_M4_S26_R2.fastq.gz
+ DuoC_WT_M5_S14_R1.fastq.gz    JejC_CGX_M5_S29_R1.fastq.gz
+ DuoC_WT_M5_S14_R2.fastq.gz    JejC_CGX_M5_S29_R2.fastq.gz
+ IleC_CGX_M1_S17_R1.fastq.gz   JejC_WT_M1_S2_R1.fastq.gz
+ IleC_CGX_M1_S17_R2.fastq.gz   JejC_WT_M1_S2_R2.fastq.gz
+ IleC_CGX_M2_S20_R1.fastq.gz   JejC_WT_M2A_S30_R1.fastq.gz
+ IleC_CGX_M2_S20_R2.fastq.gz   JejC_WT_M2A_S30_R2.fastq.gz
+ IleC_CGX_M3_S25_R1.fastq.gz   JejC_WT_M2_S5_R1.fastq.gz
+ IleC_CGX_M3_S25_R2.fastq.gz   JejC_WT_M2_S5_R2.fastq.gz
+ IleC_CGX_M4_S28_R1.fastq.gz   JejC_WT_M3_S8_R1.fastq.gz
+ IleC_CGX_M4_S28_R2.fastq.gz   JejC_WT_M3_S8_R2.fastq.gz
+ IleC_CGX_M5_S23_R1.fastq.gz   JejC_WT_M4_S11_R1.fastq.gz
+ IleC_CGX_M5_S23_R2.fastq.gz   JejC_WT_M4_S11_R2.fastq.gz
+ IleC_WT_M1_S2_R1.fastq.gz     JejC_WT_M5_S14_R1.fastq.gz
+ IleC_WT_M1_S2_R2.fastq.gz     JejC_WT_M5_S14_R2.fastq.gz
+ IleC_WT_M2_S5_R1.fastq.gz
+ 
+ all files together are 147,346,071 KB or ~150.9 GB
+ this is the COMPRESSED files, so we will probably uncompress one at a time for processing
+ 

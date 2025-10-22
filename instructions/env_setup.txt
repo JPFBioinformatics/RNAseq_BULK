@@ -1,0 +1,82 @@
+WSL/Mamba setup guide for VSCode development
+
+gotta use linux for the HPC cluster we will be running pipeline on
+
+install WSL and Ubuntu 22.04, create a login
+
+User: 	username
+PW:		password
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Setting up WSL with VSCode:
+
+Open VScode
+
+ctrl+shift+p
+type in WSL Remote: New Window
+
+this will change your file explorer on the left side of the screen
+
+you will see a directory called WSL targets, and in that directory will be a file with a name that is labelled "default distro" 
+	default distro will be to the right of the file name in a darker text color
+
+hit the arrow pointing right on this file, this will restart your VSCode window using WSL or the file looking button will open a new window
+
+Now vscode is connected to WSL correctly
+
+MAKE SURE to not open a workspace that is on your normal windows machine, you will have to make one in the windows WSL partition or VSCode will swich back to 
+windows mode so it won't work
+
+if you already created your workspace and want to copy it to WSL you can use this command in an ubuntu termninal:
+	cp -r /mnt/c/path/to/folder $HOME/new_folder_name
+
+You will know you are in the correct version of VSCode if you see a little blue box in the bottom left of your VSCode window that says WSL: Ubuntu-22.04 or whatever
+linux thingy you are using
+
+To open a new WSL terminal just hit the little dropdown menu arrow on the top right of your PS terminal and choose your Linux distro
+	it will have a header like this: WSLusername@something:/path/to/workspace/folder$
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Setting up Mamba enviornment:
+
+in WSL terminal in VSCode:
+
+	download latest miniforge3 installer:
+		wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+
+	run installer:
+		bash Miniforge3-Linux-x86_64.sh
+
+			hit enter to continue to liscence
+			mash enter until it prompts you to say 'yes' or 'no'
+			say yes to initialize
+
+	now you should have a Miniforge3-Linux-x86_64.sh file or something like that
+
+	make sure to initialzie your shell for mamba:
+		mamba shell init --shell bash --root-prefix=~/.local/share/mamba
+
+		if youi do not initialize mamba correctly then you won't create the rnaseq correctly
+		create will work fine but activate will say no env at location if you do not initialize correctly
+
+	now create mamba enviornment named rnaseq:
+		mamba create -n rnaseq python=3.10
+
+		we use python for this project so python 3.10 is used
+
+	active enviornment:
+		mamba activate rnaseq
+
+	if you're used to using a venv you may expect a folder to show up in your workspace but in conda the env is stored globally
+	so it is not going to show up here
+	you know it worked if your terminal now has the header (rnaseq) instead of (base)
+
+now that you have your env setup and activated (MAKE SURE you are using (rnaseq) and not (base) and in a WSL/linux terminal)
+its time to install the required packages/dependancies for the pipeline:
+
+	mamba install -c conda-forge -c bioconda fastqc cutadapt trim-galore star samtools subread
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,12 @@
+name: rnaseq
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.9
+  - star
+  - samtools
+  - fastp
+  - subread
+prefix: /home/jpf85/miniforge3/envs/rnaseq

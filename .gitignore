@@ -1,0 +1,34 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Conda environment directories
+env/
+envs/
+.conda/
+*.conda
+
+
+# IDE / editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Data / logs / outputs (do not track large files)
+*.log
+*.fastq
+*.fastq.gz
+*.bam
+*.bai
+*.sam
+*.gz
+*.zip
+*.tmp
+*.out
+
+# Misc / system
+.DS_Store
+*.swp
+*.git
