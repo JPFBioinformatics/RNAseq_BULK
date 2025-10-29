@@ -1,114 +1,119 @@
 # basic sturcture is root then in there is src, config, tests and instructions/readme file
 # inside root there is runs subdirectory, we make a new subdirectory in there for every experiment where we have two subdirectories, one called data that holds all
 # the data_dir stuff and another called logs which holds all the logs for that run
+# yaml is case insensitive for THE FIRST CHARACTER booleans but I always use True and False just in case, tRue, faLse, etc... will not work
 
 project:
 # project info
   # name of your run
   name: first_rna_seq
+  # wether or not you want to keep intermediate values, by default we delete them as we go so, make blank/False to keep intermediates
+  # if True (default) we will keep raw input fastq files, logs, qc reports, final BAMs, and counts
+  cleanup: True
 
 reference:
 # locations of ref files used in pipeline, placed within a reference dir that is under project_name dir
+  ref_dir: reference
   genome_fasta: genome.fa
   gtf_file: genes.gtf
   star_index: star_index/
-
-data_dirs:
-# locations for differnt output directories, will all be under project_name dir where name: project_name in above project block of config.yaml
-  qc_reports: qc_reports/
-  counts: counts/
-  log_dir: logs/
-
-temp_dirs:
-# locations for temporary directories used in analysis pipeline
-  trimmed: trimmed/       # trimmed fastq files
-  aligned: aligned/       # aligned BAM files
-
 
 samples:
 # input later when we actually have data
 # make sure that each sample will output to a different path ie data/aligned/sample1 and data/aligned/sample2 to prevent collision
 
-params:
+tools:
 
   fastp:
   # QC analysis and trimming of bad/short reads plus removing the adapter sequences
 
     # minimum read length after trimming
-    min_length: 30
+    length_required: 30
     # Trim bases with Phred score < value, 20 = 1% error prob, 30 = 0.1% error prob, 10 = 10% error prob
-    quality_cutoff: 20
-    # automatically detect illumina adapters
-    auto_detect_adapter: true
-    # illumina adapter seq in case we need to manually specify
-    adapter_fwd: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
-    adapter_rev: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+    qualified_quality_phred: 20
+    # automatically detect illumina adapters (any other string makes it so you use sbelow specified adapters)
+    specify_adapter: False
+    # illumina adapter seq in case we need to manually specify (if auto_detect_adapter = False)
+    adapter_sequence: AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
+    adapter_sequence_r2: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
 
     # number of cpu cores to use
     threads: 4
-    # output directories for the qc report and trimmed files
-    outdir_qc: qc_reports
-    outdir_trim: trimmed
 
-  star:
+  STAR:
   # generates reference library and maps bulk sequencing data to genes in library (BAM files)
   # may want to consider temp directories because STAR generates al ot of temp files and some clusters have fst scratch storage /scratch/$USER/
 
     # keeps genome index in memory for aliging many samples
-    # only useful if running multiple jobs sequentially on the same node, otherwise Load is safer
-    genomLoad: LoadAndKeep
+    # use LoadAndKeep if running multiple jobs sequentially on the same node, otherwise Load is safer (LoadAndKeep for local use typically)
+    genomeLoad: Load
     # Maximum number of multiple alignments, if a read maps to > value locations it is discarded
     outFilterMultimapNmax: 20
     # output format and sorting method
     outSAMtype: BAM SortedByCoordinate
     # improves junction detection, first pass builds splice junction database second pass uses it to improve alignment
     twopassMode: Basic
+    # type of file, zcat for zipped .gz files (preferred)
+    file_type: zcat
     # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
-    sjbdOverhang: 100
-    # maximum length of introl allowed when mapping reads, 1,000,000 is standard for mammals
+    # you can test your read lengths with this command in linux terminal (WSL):
+    #     zcat /path/to/file.fastq.gz | awk 'NR%4==2 {print length(0$)}' | head -100 | sort | unique -c'
+    #     which prints out paris of numbers, the first is the number of reads that have length equal to the second number
+    #     this looks at the first 100 reads, you can replace head -100 with shuf -n 100 to do 100 random reads from the file but this take a LOT longer to process
+    sjbdOverhang: 75
+    # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
-
-    # optinal, controls ram used for sorting
-    # ram x threads must be <= SLURM --mem allocation
-    limitBAMsortRAM: 10GB
-    # optinal saves unmapped reads for manual inspection
-    outReadsUnmapped: false
+    # temporary directory for intermediate files
+    outTempDir: 
+    # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"
+    outReadsUnmapped: False
 
     # number of cpu cores to use
     threads: 8
-    # output directory
-    outdir: aligned
 
   samtools:
   # sorts, indexes and handles BAM files output by STAR
 
+    # which file type you want to use, cram or bam
+    file_type: cram
     # max memory per thread when sorting, 4G = 4GB per thread used to prevent out of memory errors
     # sort_memory x threads must be <= SLURM --mem allocation
-    sort_memory: 4G
-    # wether or not to generate a .bai index for each BAM file, required true for viewing/using featureCounts
-    index_bam: true
+    sortMemory: 4G
+    # minimum map quality
+    minMapQuality: 30
+    # first filtering parameter, 0x2 removes unproperly paired reads leave blank/False to not use
+    filter1: 0x2
+    # second filtering parameter, 0x4 removes unmapped, 0x400 removes duplicate reads, and 0x404 removes both unmapped and duplicates leave blank/False to not use
+    filter2: 0x404
+    
+    # optional, for use if you want to look at a specific chromosome (chr1 is a chromosome 1, chr2 is chromosome 2 etc...)
+    chromosome: False
+    # optional, coordinate range on that chromosome (ie 100000-200000) NEEDS a chromosome specified above in chromosome:
+    chromosomeRange: False
 
     # number of cpu cores to use
     threads: 4
 
-  featurecounts:
+  featureCounts:
   # assigns aligned reads from BAM files to genes based on GTF annotation and generates gene expression counts
 
     # attribute in GTF file that defines the gene (default is gene_id)
     gtf_attr_type: gene_id
     # what type of genomic feature we want to work with, either gene or exon
     feature_type: exon
-    # 0=unstranded, 1=forward, 2=reverse, match your library prep
-    strand_specific: 0
+    # 0=unstranded, 1=forward, 2=reverse, match your library prep, modern illumina workflows are usually reverse stranded
+    strand_specific: 2
     # true if using paried end data false if using single end sequencing, based on your kit
-    isPairedEnd: true
+    isPairedEnd: True
 
     # optional, assign reads to the feature with largest overlap
-    largestOverlap: false
+    largestOverlap: False
     # optional, requre a certain fraction of feature to overlap
-    farcOverlap: 0
+    fracOverlap: 0
+    # optional, skip counting reads marked as duplicates
+    ignoreDup: True
+    # optional, count multi-mapping reads freactionally instead of discarding
+    countFraction: False
 
     # number of cpu cores to use
     threads: 4
-    # output directory
-    outdir: counts

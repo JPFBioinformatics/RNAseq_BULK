@@ -1,5 +1,6 @@
 from pathlib import Path
-from src.utils import log_subprocess
+from src.utils import log_subprocess, find_name
+from src.config_loader import ConfigLoader
 import subprocess
 
 class STARIndexBuilder:
@@ -7,64 +8,70 @@ class STARIndexBuilder:
     Class to build the reference idnex from genome FastA file and GTF annotation
     """
 
-    def __init__(self,genome_fasta: Path, gtf_file: Path, index_dir: Path, log_dir: Path, threads: int=4):
+    def __init__(self, root: Path, temp_dir: Path):
         """
         Params:
-            genome_fasta                        Path object pointing to the genome fasta
-            gtf_file                            Path object pointing to the gtf file
-            index_dir                           Path object pointing to the output directory to build star index files in (star_index dir in reference)
-            log_dir                             Path object pointing to the directory to store subprocess logs in (/run_name/logs)
-            threads                             Number of CPU threads to assign to task
+            root                                Path to root folder (RNAseq_BULK)
+            tempDir                             Path to temporary diretory for intermediate file storage
         """
-        self.genome_fasta = Path(genome_fasta)
-        self.gtf_file = Path(gtf_file)
-        self.index_dir = Path(index_dir)
-        self.log_dir = Path(log_dir)
-        self.threads = threads
-
-        # build output directory (/root/run_name/reference/star_index/)
-        self.index_dir.mkdir(parents=True,exist_ok=True)
+        self.root = Path(root)
+        self.config = self.root / "config.yaml"
+        self.temp_dir = Path(temp_dir)
 
     def build_index(self):
         """
         Creates a star index directory
+        Returns:
+            path to star index directory
         """
+        # load configs
+        cfg = ConfigLoader(self.config)
+
+        # get dirs
+        ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
+        idx_dir = cfg.get_path("reference","star_index",base_path=ref_dir)
+
+        # make sure directories exist
+        for dir in [ref_dir, idx_dir]:
+            dir.mkdir(parents=True,exist_ok=True)
+
+        # get other values
+        genome_fasta = cfg.get_path("reference","genome_fasta",base_path=ref_dir)
+        gtf_file = cfg.get_path("reference","gtf_file",base_path=ref_dir)
+        threads = cfg.get_threads("STAR")
 
         # build command
         cmd = [
             "STAR",
-            "--runThreadN", str(self.threads),
+            "--runThreadN", str(threads), 
             "--runMode", "genomeGenerate",
-            "--genomeDir", str(self.index_dir),
-            "--genomeFastaFiles", str(self.genome_fasta),
-            "--sjbdGTFfile", str(self.gtf_file)
+            "--genomeDir", str(idx_dir),
+            "--genomeFastaFiles", str(genome_fasta),
+            "--sjbdGTFfile", str(gtf_file)
         ]
 
         # run command
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         # log subprocess
-        log_subprocess(result, self.log_dir, "Star Reference Index Production", "STARIndexBuilder")
+        log_subprocess(result, idx_dir, "STARIndexBuilder")
 
 class STARAligner:
     """
     Class to align trimmed fastq files to reference index built by STARIndexBuilder, produces a single BAM file from forward and reverse reads
     """
 
-    def __init__(self, index_dir: Path, out_dir: Path, log_dir: Path, threads: int=4):
+    def __init__(self, root: Path, temp_dir: Path):
         """
         Params:
-            index_dir                           Path object pointing to the star_index diretctory to map reads to
-            out_dir                             Path object pointing to where the BAM files are to be stored, temporary storage space due to large size of BAM files
-            log_dir                             Path object pointing to where the subprocess logs will be stored (/run/logs)
-            threads                             Number of CPU threads to assign to task
+            root                                Path to root directory (RNAseq_BULK)
+            temp_dir                            path to temporary directory for intermediate files
         """
-        self.index_dir = index_dir
-        self.out_dir = out_dir
-        self.log_dir = log_dir
-        self.threads = threads
+        self.root = Path(root)
+        self.config = self.root / "config.yaml"
+        self.temp_dir = temp_dir
 
-    def align(self, r1: Path, r2: Path, sample_name: str):
+    def align(self, r1: Path, r2: Path):
         """
         Preforms alignment of file r1 and r2 to the Star index
 
@@ -73,23 +80,61 @@ class STARAligner:
             r2                                  Path object pointing to the trimmed reverse read to map
             sample_name                         Name to save combined reads under
         """
+        # get sample name
+        name = find_name(r1,r2)
 
-        # output file location/name
-        out_prefix = self.out_dir / f"{sample_name}_"
+        # connect to config
+        cfg = ConfigLoader(self.config)
+
+        # get directories
+        project = cfg.get_path("project","name",base_path=self.root)
+        sample_dir = project / name
+        ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
+        star_index = cfg.get_path("reference","star_index",base_path=ref_dir)
+        temp_dir = self.temp_dir / {name}
+
+        # make sure directories exist
+        for dir in [project,sample_dir,ref_dir,star_index,temp_dir]:
+            dir.mkdir(parents=True,exist_ok=True)
+
+        # get threads
+        threads = cfg.get_threads("STAR")
+
+        # get additional parameters
+        readFilesCommand = cfg.get("tools","STAR","file_type")
+        outSAMtype = cfg.get("tools","STAR","outSAMtype")
+        genomeload = cfg.get("tools","STAR","genomeload")
+        outFilterMultimapMax = cfg.get("tools","STAR","outFilterMultimapMax")
+        twopassMode = cfg.get("tools","STAR","twopassMode")
+        sjdbOverhang = cfg.get("tools","STAR","sjdbOverhang")
+        alignIntronMax = cfg.get("tools","STAR","alignIntronMax")
+        outReadsUnmapped = cfg.get("tools","STAR","outReadsUnmapped")
+
+        # specify output file
+        out_file = sample_dir / f"{name}_"
 
         # build command
         cmd = [
             "STAR",
-            "--runThreadN", str(self.threads),
-            "--genomeDir", str(self.index_dir),
+            "--runThreadN", str(threads),
+            "--genomeDir", str(star_index),
             "--readFilesIn", str(r1), str(r2),
-            "--readFilesCommand", "zcat",         # zcat for zipped fastq files
-            "--outFileNamePrefix", str(out_prefix),
-            "--outSAMtype", "BAM", "SotredByCoordinate"
+            "--readFilesCommand", str(readFilesCommand),
+            "--outFileNamePrefix", str(out_file),
+            "--outSAMtype", str(outSAMtype),
+            "--gneomeLoad", str(genomeload),
+            "--outFilterMultimapNmax", str(outFilterMultimapMax),
+            "--twopassMode", str(twopassMode),
+            "--sjdbOverhang", str(sjdbOverhang),
+            "--alignIntronMax", str(alignIntronMax),
+            "--outTmpDir", str(temp_dir)
         ]
+
+        if outReadsUnmapped == "Within" or outReadsUnmapped == "Fastx":
+            cmd.extend(["--outReadsUnmapped", outReadsUnmapped])
 
         # run command
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         # log subprocess
-        log_subprocess(result, self.log_dir, f"{sample_name}", "STARAligner")
+        log_subprocess(result, sample_dir, "STARAligner")

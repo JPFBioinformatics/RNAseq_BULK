@@ -44,9 +44,9 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--cleanup",
-        action="store_true",
-        help="Delete intermediate files (fastq, trimmed, BAM files etc...) as you go, will not delete count matrices, summary files, or logs"
+        "--tempDir",
+        required=True,
+        help="Temporary directory to store intermediate fiels in, scratch on HPC clusters"
     )
 
     return parser.parse_args()
@@ -99,13 +99,17 @@ def main():
     samples = []
 
     # check if specific forward and reverse reads are given
-    if args.sample1:
+    if args.sample1 and args.sample2:
         samples.append(in_path / Path(args.sample1))
-    if args.sample2:
         samples.append(in_path / Path(args.sample2))
+        
+    # if just one sample is given then use that one to find the second file (this is default action)
+    elif args.sample1:
+        samples.append(in_path / Path(args.sample1))
+        samples.append(in_path / Path(str(args.sample1).replace("_R1","_R2")))
 
     # if samples not specified just grab all forward reads in the file
-    if not samples:
+    else:
 
         # if indir is a diretory grab all valid files
         if in_path.is_dir():

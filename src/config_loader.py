@@ -31,10 +31,13 @@ class ConfigLoader:
         
         # iterates over all keys given going into each key subsection at each iteartion
         for key in keys:
+
+            # see if key is not in config
+
             # ensures key is a dict
             if not isinstance(value,dict):
-                print("ConfigLoader.get() stopped early")   # for debugging, remove when ready for production
                 return default
+            
             # resets value (dict) to the value under key, if key is a subdict name it reaturns that dict
             value = value.get(key, default)
         
@@ -73,4 +76,3 @@ class ConfigLoader:
             raise FileNotFoundError(f"Path {p} not found for keys {keys}")
         
         return p
-

@@ -1,7 +1,7 @@
 # uses FastP to trim data and produce a pre-trim QC report and a post-trim QC report
 import subprocess
 from pathlib import Path
-from src.utils import log_subprocess
+from src.utils import log_subprocess, find_name, check_bool
 from src.config_loader import ConfigLoader
 
 class QCTrimmer:
@@ -9,67 +9,86 @@ class QCTrimmer:
     Class to run FastQC on one or more FastQ files
     """
 
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, temp_dir: Path):
         """
         Params:
             root                        Path to the root file of the pipeline (RNAseq_bulk)
+            temp_dir                    Path to the temp dir for intermediate files
         """
-        self.root = root
+        self.root = Path(root)
+        self.config = root / "config.yaml"
+        self.temp_dir = Path(temp_dir)
 
-    def run_fastp(self, r1_in: Path, r2_in: Path, adapt_fwd: str=None, adapt_rev: str=None):
+    def run_fastp(self, r1_in: Path, r2_in: Path):
         """
         Runs FastP QC, trim, second QC and stores files as specified
         Params:
-            r1_in:                      path to the .gz forward read file
-            r2_in:                      path to the .gz reverse read file
+            r1_in                       path to the .gz forward read file
+            r2_in                       path to the .gz reverse read file
+        Returns:
+            r1_out, r2_out paths to the trimmed r1 and r2 fastq.gz files
         """
-        # get root path
-        root = self.root
-        #load config
-        cfg = ConfigLoader(root / "config.yaml")
-        # get other dir paths
-        project = self.root / cfg.get("project","name")
-        qc_path= project / cfg.get("project","data_dirs","qc_report")
-        trimmed = project/ cfg.get("project","temp_dirs","trimmed")
         
-        # get threads for this operation
-        threads = cfg.get("fastp", "threads")
+        # get names for the files/sample
+        name = find_name(r1_in,r2_in)
 
-        # get names for the input samples
-        name1 = r1_in.stem
-        name2 = r2_in.stem
-        # get full run name
+        #load config
+        cfg = ConfigLoader(self.root / "config.yaml")
+
+        # get other dir paths
+        project = cfg.get_path("project","name", base_path=self.root)
+        sample_dir = project / name
+        temp_dir = self.temp_dir / name
+
+        # build the directories if they do not already exist
+        for dir in [project,sample_dir,temp_dir]:
+            dir.mkdir(parents=True,exist_ok=True)
+            
+        # get other values
+        threads = cfg.get_threads("fastp")
+        length_required = cfg.get("tools","fastp","length_required")
+        qualified_quality_phred = cfg.get("tools","fastp","qualified_quality_phred")
+        specifyAdapter = cfg.get("tools", "fastp", "specify_adapter")
+
+        # build output files
+        r1_out = temp_dir / "trimmed_R1.fastq.gz"
+        r2_out = temp_dir / "trimmed_R2.fastq.gz"
+        html_out = sample_dir / "fastP_QC.html"
+        json_out = sample_dir / "fastP_QC.json"
 
         # build fastp command, ensuring that any Path objects are converted to str
         cmd = [
             "fastp",
             "-i", str(r1_in),
             "-I", str(r2_in),
-            "-o", str(trimmed / f"{name1}_trimmed.fastq.gz"),
-            "-O", str(trimmed / f"{name2}_trimmed.fastq.gz"),
-            "-h", str(qc_path / f"{name1}.html"),
-            "-j", str(qc_path / f"{name2}.json"),
-            "-w", str(threads)
+            "-o", str(r1_out),
+            "-O", str(r2_out),
+            "-h", str(html_out),
+            "-j", str(json_out),
+            "-w", str(threads),
+            "--length_required", length_required,
+            "--qualified_quality_phred", qualified_quality_phred
         ]
+        
+        # check that bools are bools
+        check_bool([specifyAdapter])
 
-        # include specified adapters, if not default to auto detect
-        if adapt_fwd:
-            cmd += ["--adapter_sequence", adapt_fwd]
-        if adapt_rev:
-            cmd += ["--adapter_sequence_r2", adapt_rev]
+        # check if we want to specify adapters
+        if specifyAdapter:
+            # get adapter sequences
+            adapter_sequence = cfg.get("tools","fastp","adapter_sequence")
+            adapter_sequence_r2 = cfg.get("tools","fastp","adapter_sequence_r2")
+            # include specified adapters in command
+            if adapter_sequence:
+                cmd.extend(["--adapter_sequence", adapter_sequence])
+            if adapter_sequence_r2:
+                cmd.extend(["--adapter_sequence_r2", adapter_sequence_r2])
 
         # run command
         result = subprocess.run(cmd, capture_output=True, text=True)
 
-        # get location of log directory
-        log_dir = self.log_dir
-        log_dir.mkdir(parents=True,exist_ok=True)
-
-        # get name of these samples
-        r1_name = r1_in.name
-        r2_name = r2_in.name
-        # build header for log file
-        header = f"Samples: {r1_name} and {r2_name}"
-
         # log subprocess
-        log_subprocess(result, log_dir, header, "fastp")
+        log_subprocess(result, sample_dir, "fastP")
+        
+        # return location of temp trimmed files
+        return r1_out, r2_out
