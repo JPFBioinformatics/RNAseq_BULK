@@ -9,4 +9,4 @@ dependencies:
   - samtools
   - fastp
   - subread
-prefix: /home/jpf85/miniforge3/envs/rnaseq
+  

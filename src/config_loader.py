@@ -1,10 +1,11 @@
-# loads config.yaml and allows easy retrevial of commonly used values
-
 from pathlib import Path
 import yaml
 import os
 
 class ConfigLoader:
+    """
+    loads config.yaml and gives easy access to useful information
+    """
     def __init__(self, config_file: Path):
         """
         Loads yaml file nd stores it as a dictionary as self.config
@@ -76,3 +77,48 @@ class ConfigLoader:
             raise FileNotFoundError(f"Path {p} not found for keys {keys}")
         
         return p
+
+    def check_bools(self):
+
+        # empty list to hold improperly formatted bools
+        errors = []
+
+        # list of fields that must be boolean
+        bool_fields = {
+            "save_files",
+            "specify_adapter",
+            "outReadsUnmapped",
+            "chromosome",
+            "isPairedEnd",
+            "largestOverlap",
+            "ignoreDup",
+            "countFraction"
+        }
+
+        # recursive function to enter parent dicts
+        def recurse(value, path=""):
+            # check each key value pair
+            for k,v in value.items():
+                # get string representation of current value being observed
+                current_path = f"{path}.{k}" if path else k
+                # if value is a dict then go another layer deeper
+                if isinstance(v,dict):
+                    recurse(v,current_path)
+                # if not a dict, check if it is in bool_fields and if it is properly formatted as bool
+                else:
+                    # if imrpoperly formatted then append it to errors list
+                    if k in bool_fields and not isinstance(v,bool):
+                        errors.append(current_path)
+        
+        # run recursive method on loaded config dict
+        recurse(self.config)
+        
+        # output error/all good message
+        if errors:
+            raise ValueError(
+                f"Invalid boolean fields found in config.yaml, reformat to True/False:\n"+
+                "\n".join(f" - {e}" for e in errors)
+                )
+        else:
+            print("All boolean fields valid, continuing pipeline")
+

@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.utils import log_subprocess, find_name
+from src.utils import log_subprocess, find_name, get_STAR_suffix
 from src.config_loader import ConfigLoader
 import subprocess
 
@@ -8,14 +8,15 @@ class STARIndexBuilder:
     Class to build the reference idnex from genome FastA file and GTF annotation
     """
 
-    def __init__(self, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
         """
         Params:
+            cfg                                 ConfigLoader object that has loaded config.yaml for this project
             root                                Path to root folder (RNAseq_BULK)
             tempDir                             Path to temporary diretory for intermediate file storage
         """
         self.root = Path(root)
-        self.config = self.root / "config.yaml"
+        self.cfg = cfg
         self.temp_dir = Path(temp_dir)
 
     def build_index(self):
@@ -25,7 +26,7 @@ class STARIndexBuilder:
             path to star index directory
         """
         # load configs
-        cfg = ConfigLoader(self.config)
+        cfg = self.cfg
 
         # get dirs
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
@@ -61,30 +62,34 @@ class STARAligner:
     Class to align trimmed fastq files to reference index built by STARIndexBuilder, produces a single BAM file from forward and reverse reads
     """
 
-    def __init__(self, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
         """
         Params:
+            cfg                                 ConfigLoader object that has loaded config.yaml for this project
             root                                Path to root directory (RNAseq_BULK)
             temp_dir                            path to temporary directory for intermediate files
         """
         self.root = Path(root)
-        self.config = self.root / "config.yaml"
+        self.cfg = cfg
         self.temp_dir = temp_dir
 
-    def align(self, r1: Path, r2: Path):
+    def align(self, r1: Path, r2: Path, cleanup=False):
         """
         Preforms alignment of file r1 and r2 to the Star index
 
         Params:
             r1                                  Path object pointing to the trimmed forward read to map
             r2                                  Path object pointing to the trimmed reverse read to map
-            sample_name                         Name to save combined reads under
+            cleanup                             bool, if true then delete the input r1/r2 files
+
+        Returns:
+            path to aligned bam file
         """
         # get sample name
         name = find_name(r1,r2)
 
         # connect to config
-        cfg = ConfigLoader(self.config)
+        cfg = self.cfg
 
         # get directories
         project = cfg.get_path("project","name",base_path=self.root)
@@ -138,3 +143,21 @@ class STARAligner:
 
         # log subprocess
         log_subprocess(result, sample_dir, "STARAligner")
+
+        # get STAR suffix
+        suffix = get_STAR_suffix(cfg)
+
+        # build full path to output file with STAR suffixes attached
+        output_full = out_file.with_name(out_file.name + suffix)
+
+        # delete input trimmed files if successful
+        if output_full.exists() and cleanup:
+            try:
+                r1.unlink()
+                r2.unlink()
+            except Exception as e:
+                print(f"Warning: could not delete input FASTQ files {r1}, {r2}\n{e}")
+
+        # return full path
+        return output_full
+    

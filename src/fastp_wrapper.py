@@ -9,14 +9,15 @@ class QCTrimmer:
     Class to run FastQC on one or more FastQ files
     """
 
-    def __init__(self, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
         """
         Params:
+            cfg                         ConfigLoader object that has loaded the config.yaml file for this project
             root                        Path to the root file of the pipeline (RNAseq_bulk)
             temp_dir                    Path to the temp dir for intermediate files
         """
         self.root = Path(root)
-        self.config = root / "config.yaml"
+        self.cfg = cfg
         self.temp_dir = Path(temp_dir)
 
     def run_fastp(self, r1_in: Path, r2_in: Path):
@@ -33,7 +34,7 @@ class QCTrimmer:
         name = find_name(r1_in,r2_in)
 
         #load config
-        cfg = ConfigLoader(self.root / "config.yaml")
+        cfg = self.cfg
 
         # get other dir paths
         project = cfg.get_path("project","name", base_path=self.root)
@@ -69,9 +70,6 @@ class QCTrimmer:
             "--length_required", length_required,
             "--qualified_quality_phred", qualified_quality_phred
         ]
-        
-        # check that bools are bools
-        check_bool([specifyAdapter])
 
         # check if we want to specify adapters
         if specifyAdapter:

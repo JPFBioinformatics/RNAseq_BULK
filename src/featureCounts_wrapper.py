@@ -1,19 +1,20 @@
 from pathlib import Path
 from src.config_loader import ConfigLoader
-from src.utils import check_bool,log_subprocess
+from src.utils import log_subprocess
 import subprocess
 
 class FeatureCountsWrapper:
     """
     wrapper class for featureCounts that produce text files for downstream analysis
     """
-    def __init__(self, root: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path):
         """
         Params:
+            cfg                         ConfigLoader object that has loaded config.yaml for this project
             root                        Path to root project folder
         """
         self.root = root
-        self.config = root / "config.yaml"
+        self.cfg = cfg
 
     def count_features(self, bam_file: Path):
         """
@@ -25,7 +26,7 @@ class FeatureCountsWrapper:
         name = bam_file.stem.split("_Aligned")[0]
 
         # connect to config
-        cfg = ConfigLoader(self.config)
+        cfg = self.cfg
 
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
@@ -41,11 +42,10 @@ class FeatureCountsWrapper:
         strand = cfg.get("tools","featureCounts","strand_specific")
         feature_type = cfg.get("tools","featureCounts","feature_type")
         gtf_attr_type = cfg.get("tools","featureCounts","gtf_attr_type")
-        # bools
         ignoreDup = cfg.get("tools","featureCounts","ignoreDup")
         isPairedEnd = cfg.get("tools","featureCounts","isPairedEnd")
-        # ensure booleans are booleans
-        check_bool([ignoreDup,isPairedEnd])
+        save_files = cfg.get("project","save_files")
+
 
         # build output file
         out_file = sample_dir / f"counts.txt"
@@ -75,4 +75,11 @@ class FeatureCountsWrapper:
 
         # log subprocess
         log_subprocess(result,sample_dir,"featureCounts")
+
+        # if we are not saving files then delete the input bam
+        if not save_files:
+            try:
+                bam_file.unlink()
+            except Exception as e:
+                print(f"Warning, could not delete file {bam_file}\n{e}")
 

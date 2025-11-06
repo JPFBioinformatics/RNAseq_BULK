@@ -7,9 +7,10 @@ project:
 # project info
   # name of your run
   name: first_rna_seq
-  # wether or not you want to keep intermediate values, by default we delete them as we go so, make blank/False to keep intermediates
-  # if True (default) we will keep raw input fastq files, logs, qc reports, final BAMs, and counts
-  cleanup: True
+  # make "True" if you want to keep intermediate BAM files for later use, otherwise they will be deleted after counts are generated
+  save_files: False
+  # "bam" if you want the program to save bam files, "cram" if you want the program to save cram files (compressed BAM for storage concerns), use with save_files: True
+  save_type: cram
 
 reference:
 # locations of ref files used in pipeline, placed within a reference dir that is under project_name dir
@@ -63,8 +64,6 @@ tools:
     sjbdOverhang: 75
     # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
-    # temporary directory for intermediate files
-    outTempDir: 
     # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"
     outReadsUnmapped: False
 
@@ -74,9 +73,7 @@ tools:
   samtools:
   # sorts, indexes and handles BAM files output by STAR
 
-    # which file type you want to use, cram or bam
-    file_type: cram
-    # max memory per thread when sorting, 4G = 4GB per thread used to prevent out of memory errors
+    # max memory PER THREAD when sorting, 4G = 4GB per thread used to prevent out of memory errors
     # sort_memory x threads must be <= SLURM --mem allocation
     sortMemory: 4G
     # minimum map quality
@@ -89,7 +86,7 @@ tools:
     # optional, for use if you want to look at a specific chromosome (chr1 is a chromosome 1, chr2 is chromosome 2 etc...)
     chromosome: False
     # optional, coordinate range on that chromosome (ie 100000-200000) NEEDS a chromosome specified above in chromosome:
-    chromosomeRange: False
+    chromosomeRange: 
 
     # number of cpu cores to use
     threads: 4
