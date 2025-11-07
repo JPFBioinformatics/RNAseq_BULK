@@ -19,11 +19,8 @@ reference:
   gtf_file: genes.gtf
   star_index: star_index/
 
-samples:
-# input later when we actually have data
-# make sure that each sample will output to a different path ie data/aligned/sample1 and data/aligned/sample2 to prevent collision
-
 tools:
+# configs for the tools used in the pipeline
 
   fastp:
   # QC analysis and trimming of bad/short reads plus removing the adapter sequences
@@ -57,11 +54,7 @@ tools:
     # type of file, zcat for zipped .gz files (preferred)
     file_type: zcat
     # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
-    # you can test your read lengths with this command in linux terminal (WSL):
-    #     zcat /path/to/file.fastq.gz | awk 'NR%4==2 {print length(0$)}' | head -100 | sort | unique -c'
-    #     which prints out paris of numbers, the first is the number of reads that have length equal to the second number
-    #     this looks at the first 100 reads, you can replace head -100 with shuf -n 100 to do 100 random reads from the file but this take a LOT longer to process
-    sjbdOverhang: 75
+    sjdbOverhang: 75
     # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
     # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"
@@ -77,7 +70,7 @@ tools:
     # sort_memory x threads must be <= SLURM --mem allocation
     sortMemory: 4G
     # minimum map quality
-    minMapQuality: 30
+    minMapQuality: 20
     # first filtering parameter, 0x2 removes unproperly paired reads leave blank/False to not use
     filter1: 0x2
     # second filtering parameter, 0x4 removes unmapped, 0x400 removes duplicate reads, and 0x404 removes both unmapped and duplicates leave blank/False to not use
