@@ -1,6 +1,9 @@
+# region Imports
+
 from pathlib import Path
-import yaml
-import os
+import yaml, os
+
+# endregion
 
 class ConfigLoader:
     """
@@ -53,7 +56,7 @@ class ConfigLoader:
             tool_name:             string name of the tool, such as "star" or "fastqc"
         """
         # threads listed in yaml
-        threads = self.get("params", tool_name, "threads", defalut=1)
+        threads = self.get("params", tool_name, "threads", default=1)
         # if SLURM specifies a number of threads override at runtime
         threads = int(os.environ.get("SLURM_CPUS_PER_TASK", threads))
 

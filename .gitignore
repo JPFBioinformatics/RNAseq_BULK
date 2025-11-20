@@ -32,3 +32,9 @@ envs/
 .DS_Store
 *.swp
 *.git
+
+# reference files
+reference/
+
+# downloaded test datasets
+test-datasets/

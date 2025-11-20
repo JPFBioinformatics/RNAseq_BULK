@@ -6,7 +6,7 @@ Sections:
     Arguments                       description of the arguments that you need to pass with the script call(s) in your command line
     Config                          information on config.yaml, how you can get the pipeline to run differently if you don't like the defaults, probably don't touch
                                     config.yaml if you don't know a lot about the tools used in the pipeline
-
+    Testing                         where the test files in this repo came from and how to set up testing for the pipeline
 
 ===================================================== General ====================================================
 
@@ -16,8 +16,11 @@ of memory so you need lots of extra memory and this will take a long time if you
 Built for 2 read illumina sequencing
 PLEASE consult Naming Conventions section of readme at least before running
 
+You must also either place your genome fasta file and GTF file in the reference dir  of this pipeline (RNAseq_BULK), withe their names being set to "genome.fa" and "genes.gtf" 
+respectively, or specify the dir that these files are in and their names in the config.yaml before running the pipeline
+
 to run this pipeline with default parameters here are some example commands for different use cases
-        
+
         NOTES:
 
         root folder is the root of this pipeline, RNAseq_BULK or whatever you renamed it
@@ -58,7 +61,7 @@ for any of these
         make sure to differentiate gropued fastq files using _R1 and _R2
             sample1_v1_R1.fastq.gz and sample1_v1_R2.fastq.gz will be grouped together
             this allows for automatic sample gropu detection and facilitates efficeint SLURM usage
-    
+
     We do allow for the user to specify two files to group together, but it is clunker for SLURM automation so it is meant to be used sparingly
 
 ===================================================== Arguments ===================================================
@@ -165,6 +168,10 @@ Tool Configuration (-tools:)
         -outFilterMultimapNmax
         Maximum allowed number of multi-mapping locations. Reads exceeding this are discarded.
 
+        -outFilterMismatchNoverLmax
+        max mismatch score before read is discarded (optional, we use star default usually) just leave it blank unless you have a good reason
+        0.2 would mean that the alignment must be at least 80% correct
+
         -outSAMtype
         Output file format and sorting method. Examples:
             BAM Unsorted
@@ -266,3 +273,9 @@ Tool Configuration (-tools:)
 
         -threads
         Number of CPU cores used by featureCounts.
+
+====================================================== Testing =====================================================
+
+Test is split into two parts
+
+    1. FastP/STAR/SamTools

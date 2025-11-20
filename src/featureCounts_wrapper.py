@@ -1,7 +1,17 @@
+# region Imports
+
 from pathlib import Path
+import sys, subprocess
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
 from src.config_loader import ConfigLoader
 from src.utils import log_subprocess
-import subprocess
+
+# endregion
 
 class FeatureCountsWrapper:
     """
@@ -23,6 +33,7 @@ class FeatureCountsWrapper:
             bam_file                    path to the bam file to be counted
         """
         # sample name
+        print(f"\nFeatureCounts input:/n{bam_file}")
         name = bam_file.stem.split("_Aligned")[0]
 
         # connect to config

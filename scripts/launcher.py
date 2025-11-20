@@ -1,9 +1,17 @@
+# region Imports
+
 from pathlib import Path
+import sys, argparse,subprocess,shlex
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
 from src.config_loader import ConfigLoader
 from src.utils import log_subprocess, get_max_threads, get_total_memory
-import argparse
-import subprocess
-import shlex
+
+# endregion
 
 def parse_args():
     """

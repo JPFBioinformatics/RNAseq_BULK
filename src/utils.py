@@ -1,9 +1,17 @@
+# region Imports
+
 from pathlib import Path
-import subprocess
 from datetime import datetime
-import json
+import json, os, sys, subprocess
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
 from src.config_loader import ConfigLoader
-import os
+
+# endregion
 
 def log_subprocess(result: subprocess.CompletedProcess, log_dir: Path, step: str):
     """

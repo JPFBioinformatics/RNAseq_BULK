@@ -1,12 +1,9 @@
-# basic sturcture is root then in there is src, config, tests and instructions/readme file
-# inside root there is runs subdirectory, we make a new subdirectory in there for every experiment where we have two subdirectories, one called data that holds all
-# the data_dir stuff and another called logs which holds all the logs for that run
 # yaml is case insensitive for THE FIRST CHARACTER booleans but I always use True and False just in case, tRue, faLse, etc... will not work
 
 project:
 # project info
   # name of your run
-  name: first_rna_seq
+  name: test_run
   # make "True" if you want to keep intermediate BAM files for later use, otherwise they will be deleted after counts are generated
   save_files: False
   # "bam" if you want the program to save bam files, "cram" if you want the program to save cram files (compressed BAM for storage concerns), use with save_files: True
@@ -14,9 +11,15 @@ project:
 
 reference:
 # locations of ref files used in pipeline, placed within a reference dir that is under project_name dir
+  # name of dir that genome fasta and gtf file are in, and wher star_index will be built
   ref_dir: reference
+  # name/url of ref genome
   genome_fasta: genome.fa
+  genome_url: ftp://hgdownload.soe.ucsc.edu/goldenPath/mm39/bigZips/mm39.fa.gz
+  # name/url of ref gtf file
   gtf_file: genes.gtf
+  gtf_url: ftp://hgdownload.soe.ucsc.edu/goldenPath/mm39/bigZips/genes/mm39.ncbiRefSeq.gtf.gz
+  # name to be used for the star_index dir
   star_index: star_index/
 
 tools:
@@ -44,10 +47,12 @@ tools:
 
     # keeps genome index in memory for aliging many samples
     # use LoadAndKeep if running multiple jobs sequentially on the same node, otherwise Load is safer (LoadAndKeep for local use typically)
-    genomeLoad: Load
+    genomeLoad: LoadAndRemove
     # Maximum number of multiple alignments, if a read maps to > value locations it is discarded
     outFilterMultimapNmax: 20
-    # output format and sorting method
+    # minimum match score of the read to the ref genome for alignment (0.2 means it must be an 80% match), optional we use star default by not specifying
+    outFilterMismatchNoverLmax: 
+    # output format and sorting method, we always sort with samtools (for downstream compatibility) so it is not needed here
     outSAMtype: BAM SortedByCoordinate
     # improves junction detection, first pass builds splice junction database second pass uses it to improve alignment
     twopassMode: Basic

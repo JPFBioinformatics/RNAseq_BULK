@@ -1,8 +1,17 @@
-# uses FastP to trim data and produce a pre-trim QC report and a post-trim QC report
-import subprocess
+# region Imports
+
+import subprocess, sys
 from pathlib import Path
-from src.utils import log_subprocess, find_name, check_bool
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
+from src.utils import log_subprocess, find_name
 from src.config_loader import ConfigLoader
+
+# endregion
 
 class QCTrimmer:
     """
@@ -52,8 +61,8 @@ class QCTrimmer:
         specifyAdapter = cfg.get("tools", "fastp", "specify_adapter")
 
         # build output files
-        r1_out = temp_dir / "trimmed_R1.fastq.gz"
-        r2_out = temp_dir / "trimmed_R2.fastq.gz"
+        r1_out = temp_dir / f"{name}_R1_trimmed.fastq.gz"
+        r2_out = temp_dir / f"{name}_R2_trimmed.fastq.gz"
         html_out = sample_dir / "fastP_QC.html"
         json_out = sample_dir / "fastP_QC.json"
 
@@ -67,8 +76,8 @@ class QCTrimmer:
             "-h", str(html_out),
             "-j", str(json_out),
             "-w", str(threads),
-            "--length_required", length_required,
-            "--qualified_quality_phred", qualified_quality_phred
+            "--length_required", str(length_required),
+            "--qualified_quality_phred", str(qualified_quality_phred)
         ]
 
         # check if we want to specify adapters

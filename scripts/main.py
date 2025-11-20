@@ -1,12 +1,21 @@
+# region Imports
+
+from pathlib import Path
+import argparse,shutil,sys
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
 from src.config_loader import ConfigLoader
 from src.utils import generate_paired_samples, get_scratch, find_name
-from pathlib import Path
-import argparse
-import shutil
 from src.fastp_wrapper import QCTrimmer
 from src.star_wrapper import STARIndexBuilder, STARAligner
 from src.samtools_wrapper import SamtoolsWrapper
 from src.featureCounts_wrapper import FeatureCountsWrapper
+
+# endregion
 
 def parse_args():
     """
@@ -25,7 +34,7 @@ def parse_args():
 
     parser.add_argument(
         "--indir",
-        requried=True,
+        required=True,
         help="Path to directory where input files are stored"
     )
 
@@ -64,7 +73,7 @@ def main():
     # parse args
     args = parse_args()
     # load config
-    config = args.root / "config.yaml"
+    config = Path(args.root) / "config.yaml"
     cfg =  ConfigLoader(Path(config))
 
 

@@ -1,10 +1,17 @@
+# region Imports
+
 from pathlib import Path
+import sys, subprocess
+
+# location of pipeline root dir
+root_dir = Path(__file__).resolve().parent.parent
+# tell python to look here for modules
+sys.path.insert(0, str(root_dir))
+
 from src.utils import log_subprocess
-import subprocess
-from config_loader import ConfigLoader
+from src.config_loader import ConfigLoader
 
-# sort, index, filter in that order
-
+# endregion
 
 class SamtoolsWrapper:
     """
@@ -13,7 +20,7 @@ class SamtoolsWrapper:
         -filter
         -index
         -flatstat (QC for logs)
-    pipeline will do these operations in above order by default
+    pipeline will do these operations in above order by default, flagstat happens multiple times not just at the end
     """
 
     def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
@@ -39,6 +46,7 @@ class SamtoolsWrapper:
         self.flagstat(file,"raw")
 
         # get sample name
+        print(f"\nSamtools Input:\n{file}")
         name = file.stem.split("_Aligned")[0]
 
         # load config
@@ -72,7 +80,7 @@ class SamtoolsWrapper:
         ]
 
         # execute command
-        result = subprocess(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
         # log results
         log_subprocess(result, sample_dir, "samtools_sort")
@@ -137,7 +145,7 @@ class SamtoolsWrapper:
         cmd.append(str(file))
 
         # run command
-        result = subprocess(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
         # log results
         log_subprocess(result, sample_dir, "samtools_index")
@@ -197,7 +205,7 @@ class SamtoolsWrapper:
         cmd.append(str(file))
         
         # run subprocess
-        result = subprocess(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
         # log subprocess
         log_subprocess(result,sample_dir,"samtools_filter")
@@ -243,7 +251,7 @@ class SamtoolsWrapper:
         ]
 
         # run command
-        result = subprocess(cmd,capture_output=True,text=True)
+        result = subprocess.run(cmd,capture_output=True,text=True)
         
         # log subprocess
         log_subprocess(result,sample_dir,f"flagstat_{file_status}")
@@ -285,7 +293,7 @@ class SamtoolsWrapper:
         ]
 
         # run command
-        result = subprocess(cmd,capture_output=True,text=True)
+        result = subprocess.run(cmd,capture_output=True,text=True)
 
         # log subprocess
         log_subprocess(result,sample_dir,"cram")
