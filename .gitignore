@@ -9,7 +9,6 @@ envs/
 .conda/
 *.conda
 
-
 # IDE / editor settings
 .vscode/
 .idea/

@@ -18,16 +18,18 @@ class QCTrimmer:
     Class to run FastQC on one or more FastQ files
     """
 
-    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path, sample_dir: Path):
         """
         Params:
             cfg                         ConfigLoader object that has loaded the config.yaml file for this project
             root                        Path to the root file of the pipeline (RNAseq_bulk)
             temp_dir                    Path to the temp dir for intermediate files
+            sample_dir                  dierctory where sample data is to be stored
         """
         self.root = Path(root)
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
+        self.sample_dir = Path(sample_dir)
 
     def run_fastp(self, r1_in: Path, r2_in: Path):
         """
@@ -47,7 +49,7 @@ class QCTrimmer:
 
         # get other dir paths
         project = cfg.get_path("project","name", base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         temp_dir = self.temp_dir / name
 
         # build the directories if they do not already exist
@@ -59,12 +61,13 @@ class QCTrimmer:
         length_required = cfg.get("tools","fastp","length_required")
         qualified_quality_phred = cfg.get("tools","fastp","qualified_quality_phred")
         specifyAdapter = cfg.get("tools", "fastp", "specify_adapter")
+        save_inputs = cfg.get("tools","fastp","save_inputs")
 
         # build output files
         r1_out = temp_dir / f"{name}_R1_trimmed.fastq.gz"
         r2_out = temp_dir / f"{name}_R2_trimmed.fastq.gz"
-        html_out = sample_dir / "fastP_QC.html"
-        json_out = sample_dir / "fastP_QC.json"
+        html_out = sample_dir / "logs" / "fastP_QC.html"
+        json_out = sample_dir / "logs" / "fastP_QC.json"
 
         # build fastp command, ensuring that any Path objects are converted to str
         cmd = [
@@ -96,6 +99,14 @@ class QCTrimmer:
 
         # log subprocess
         log_subprocess(result, sample_dir, "fastP")
-        
+
+        if r1_out.exists() and r2_out.exists() and not save_inputs:
+            try:
+                r1_in.unlink()
+                r2_in.unlink()
+                print(f"FastP complete, deleted input files:\n{r1_in}\n{r2_in}\n")
+            except Exception as e:
+                print(f"Warning, could not delete FastP input files:\n{r1_in}\n{r2_in}\n")
+
         # return location of temp trimmed files
         return r1_out, r2_out

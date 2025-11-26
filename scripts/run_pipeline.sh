@@ -16,7 +16,15 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --steps)
-            STEPS="$2"
+            shift
+            STEPS=()
+            while [[ $# -gt 0 && "$1" != --* ]]; do
+                STEPS+=("$1")
+                shift
+            done
+            ;;
+        --conda-env)
+            CONDA_ENV="$2"
             shift 2
             ;;
         *)
@@ -40,8 +48,13 @@ if [[ -z "$INDIR" ]]; then
     exit 1
 fi
 
-if [[ -z "$STEPS" ]]; then
-    echo "ERROR: --steps not provided" >&2
+if [[ -z "$CONDA_ENV" ]]; then
+    echo "ERROR: --conda-env not provided" >&2
+    exit 1
+fi
+
+if [[ ${#STEPS[@]} -eq 0 ]]; then
+    echo "ERROR: No steps provided after --steps" >&2
     exit 1
 fi
 
@@ -70,22 +83,23 @@ fi
 echo "SLURM task $TASK_ID processing:"
 echo "  R1 = $R1"
 echo "  R2 = $R2"
-echo "  steps = $STEPS"
-
-# ---------------------------------------------------
-# Activate environment
-# ---------------------------------------------------
-
-conda activate rnaseq
+echo "  steps = ${STEPS[@]}"
 
 # ---------------------------------------------------
 # Run main.py for this sample
 # ---------------------------------------------------
 
-python3 "$ROOT/main.py" \
+echo "Running main.py with steps: ${STEPS[@]}"
+echo "R1 = $R1"
+echo "R2 = $R2"
+echo "ROOT = $ROOT"
+echo "INDIR = $INDIR"
+echo "CONDA_ENV = $CONDA_ENV"
+
+conda run -n "$CONDA_ENV" python3 "$ROOT/scripts/main.py" \
     --root "$ROOT" \
     --indir "$INDIR" \
     --sample1 "$R1" \
     --sample2 "$R2" \
-    --steps $STEPS
+    --steps ${STEPS[@]}
 

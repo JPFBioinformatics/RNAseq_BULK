@@ -23,16 +23,18 @@ class SamtoolsWrapper:
     pipeline will do these operations in above order by default, flagstat happens multiple times not just at the end
     """
 
-    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path, sample_dir: Path):
         """
         Params:
             cfg                             ConfigLoader object that has loaded config.yaml for this project
             root                            path to root folder of project
             temp_dir                        path to the temp dir for intermediate files
+            sample_dir                      directory where sample data will be stored
         """
         self.root = Path(root)
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
+        self.sample_dir = Path(sample_dir)
 
     def sort_file(self, file: Path):
         """
@@ -46,15 +48,14 @@ class SamtoolsWrapper:
         self.flagstat(file,"raw")
 
         # get sample name
-        print(f"\nSamtools Input:\n{file}")
-        name = file.stem.split("_Aligned")[0]
+        name = file.stem.split("Aligned")[0]
 
         # load config
         cfg = self.cfg
 
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         temp_dir = self.temp_dir / name
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
 
@@ -67,7 +68,7 @@ class SamtoolsWrapper:
         sortMemory = cfg.get("tools","samtools","sortMemory")
         
         # build output file
-        out_file = temp_dir / f"{name}_Aligned_Sorted.bai"
+        out_file = temp_dir / f"{name}_Aligned_Sorted.bam"
 
         # build command
         cmd = [
@@ -87,14 +88,15 @@ class SamtoolsWrapper:
 
         # get sorted QC
         self.flagstat(out_file,"sorted")
-
+        
         # if subprocess was successful then delete input file
         if out_file.exists():
             try:
                 file.unlink()
+                print(f"Samtools sort complete, deleted input file:\n{file}\n")
             except Exception as e:
-                print(f"Warning, could not delete input file {file}\n{e}")
-
+                print(f"Warning, could not delete input file:\n{file}\nError:\n{e}\n")
+        
         # return path to sorted file
         return out_file
 
@@ -112,7 +114,7 @@ class SamtoolsWrapper:
 
         # get config dirs
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
 
         # make sure directories exist
@@ -127,7 +129,7 @@ class SamtoolsWrapper:
             ext = "crai"
         
         # out file location
-        out_file = self.temp_dir / f"{name}.{ext}"
+        out_file = self.temp_dir / name / f"{name}.{ext}"
 
         # build command
         cmd = [
@@ -168,7 +170,7 @@ class SamtoolsWrapper:
 
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         temp_dir = self.temp_dir / name
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
 
@@ -212,14 +214,15 @@ class SamtoolsWrapper:
 
         # get filtered QC
         self.flagstat(out_file, "filtered")
-
+        
         # if subprocess was successful then delete input file
         if out_file.exists():
             try:
                 file.unlink()
+                print(f"Samtools filter complete, deleted input file:\n{file}\n")
             except Exception as e:
-                print(f"Warning, could not delete input file {file}\n{e}")
-
+                print(f"Warning, could not delete input file:\n{file}\nError:\n{e}\n")
+        
         return out_file
 
     def flagstat(self, file: Path, file_status: str):
@@ -229,15 +232,13 @@ class SamtoolsWrapper:
             file                            path to the file to run flagstat on
             file_status                     step in the samtools process the flagstat is run on, raw, sorted, or filtered
         """
-        # get name of sample
-        name = file.stem.split("_Aligned")[0]
 
         # connect to config
         cfg = self.cfg
 
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
 
         # make sure directories exist
         for dir in [project,sample_dir]:
@@ -270,7 +271,7 @@ class SamtoolsWrapper:
 
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         temp_dir = self.temp_dir
         # make sure dirs exist
         for dir in [project,sample_dir,temp_dir]:
@@ -297,13 +298,14 @@ class SamtoolsWrapper:
 
         # log subprocess
         log_subprocess(result,sample_dir,"cram")
-
+        
         # if successful then delete input bam file
         if out_file.exists():
             try:
                 bam_file.unlink
+                print(f"Cram file generated successfully, deleted input bam:\n{bam_file}\n")
             except Exception as e:
-                print(f"Warning: could not delete origonal BAM file {bam_file}: {e}")
+                print(f"Warning, could not delete origonal BAM file:\n{bam_file}\nError:\n{e}\n")
 
         # return output cram file
         return out_file

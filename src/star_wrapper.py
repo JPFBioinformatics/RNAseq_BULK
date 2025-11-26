@@ -72,16 +72,18 @@ class STARAligner:
     Class to align trimmed fastq files to reference index built by STARIndexBuilder, produces a single BAM file from forward and reverse reads
     """
 
-    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, temp_dir: Path, sample_dir: Path):
         """
         Params:
             cfg                                 ConfigLoader object that has loaded config.yaml for this project
             root                                Path to root directory (RNAseq_BULK)
             temp_dir                            path to temporary directory for intermediate files
+            sample_dir                          directory where sample data will be stored
         """
         self.root = Path(root)
         self.cfg = cfg
-        self.temp_dir = temp_dir
+        self.temp_dir = Path(temp_dir)
+        self.sample_dir = Path(sample_dir)
 
     def align(self, r1: Path, r2: Path, cleanup=False):
         """
@@ -91,12 +93,10 @@ class STARAligner:
             r1                                  Path object pointing to the trimmed forward read to map
             r2                                  Path object pointing to the trimmed reverse read to map
             cleanup                             bool, if true then delete the input r1/r2 files
-
         Returns:
             path to aligned bam file
         """
         # get sample name
-        print(f"\nStar Inputs:\n{r1}    {r2}\n")
         name = find_name(r1,r2)
 
         # connect to config
@@ -104,7 +104,7 @@ class STARAligner:
 
         # get directories
         project = cfg.get_path("project","name",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
         star_index = cfg.get_path("reference","star_index",base_path=ref_dir)
         temp_dir = self.temp_dir / name
@@ -118,9 +118,10 @@ class STARAligner:
 
         # get additional parameters
         readFilesCommand = cfg.get("tools","STAR","file_type")
-        outSAMtype = cfg.get("tools","STAR","outSAMtype")
+        outSAMtype_raw = cfg.get("tools","STAR","outSAMtype")
+        outSAMtype = outSAMtype_raw.split()
         genomeload = cfg.get("tools","STAR","genomeLoad")
-        outFilterMultimapMax = cfg.get("tools","STAR","outFilterMultimapMax")
+        outFilterMultimapNMax = cfg.get("tools","STAR","outFilterMultimapNmax")
         twopassMode = cfg.get("tools","STAR","twopassMode")
         sjdbOverhang = cfg.get("tools","STAR","sjdbOverhang")
         alignIntronMax = cfg.get("tools","STAR","alignIntronMax")
@@ -128,8 +129,7 @@ class STARAligner:
         outFilterMismatchNoverLmax = cfg.get("tools","STAR","outFilterMismatchNoverLmax")
 
         # specify output file
-        out_file = sample_dir / f"{name}"
-        print(f"\naligner out_file:\n{out_file}")
+        out_file = temp_dir / f"{name}"
 
         # build command
         cmd = [
@@ -139,9 +139,9 @@ class STARAligner:
             "--readFilesIn", str(r1), str(r2),
             "--readFilesCommand", str(readFilesCommand),
             "--outFileNamePrefix", str(out_file),
-            "--outSAMtype", str(outSAMtype),
+            "--outSAMtype", *outSAMtype,
             "--genomeLoad", str(genomeload),
-            "--outFilterMultimapNmax", str(outFilterMultimapMax),
+            "--outFilterMultimapNmax", str(outFilterMultimapNMax),
             "--twopassMode", str(twopassMode),
             "--sjdbOverhang", str(sjdbOverhang),
             "--alignIntronMax", str(alignIntronMax),
@@ -167,15 +167,16 @@ class STARAligner:
 
         # build full path to output file with STAR suffixes attached
         output_full = out_file.with_name(out_file.name + suffix)
-
+        
         # delete input trimmed files if successful
         if output_full.exists() and cleanup:
             try:
                 r1.unlink()
                 r2.unlink()
+                print(f"STAR alignment complete, deleted iput files:\n{r1}\n{r2}\n")
             except Exception as e:
-                print(f"Warning: could not delete input FASTQ files {r1}, {r2}\n{e}")
-
+                print(f"Warning: could not delete input FASTQ files:\n{r1}\n{r2}\nError:\n{e}\n")
+        
         # return full path
         return output_full
     

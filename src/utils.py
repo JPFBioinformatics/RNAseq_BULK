@@ -13,18 +13,20 @@ from src.config_loader import ConfigLoader
 
 # endregion
 
-def log_subprocess(result: subprocess.CompletedProcess, log_dir: Path, step: str):
+def log_subprocess(result: subprocess.CompletedProcess, sample_dir: Path, step: str):
     """
     Collects logs produced by python subprocess and puts them in a text file for easy viewing
     Params:
         result:                     subprocess.CompletedProcess object that can be logged, result of running subprocess
-        log_dir:                    path to the sample file where we will write log file
+        sample_dir:                 path to the sample file where we will write log file
         step:                       step (fastp, starAlign etc...) that this subprocess was associated with
     """
     # get timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # make sure log_dir exists
+    # make sure sample_dir and log_dir exist
+    sample_dir.mkdir(parents=True,exist_ok=True)
+    log_dir = sample_dir / "logs"
     log_dir.mkdir(parents=True,exist_ok=True)
 
     # path to log file
@@ -264,7 +266,7 @@ def get_STAR_suffix(cfg: ConfigLoader):
     
     # check if sorting was specified
     if not sorting:
-        full_suffix = f"_Aligned.out.{suffix_type}"
+        full_suffix = f"Aligned.out.{suffix_type}"
 
     # if it was then add requried parts to STAR suffix
     else:
@@ -276,7 +278,7 @@ def get_STAR_suffix(cfg: ConfigLoader):
         else:
             suffix_sort = "sortedByName"
 
-        full_suffix = f"_Aligned.{suffix_sort}.out.{suffix_type}"
+        full_suffix = f"Aligned.{suffix_sort}.out.{suffix_type}"
 
     return full_suffix
 

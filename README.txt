@@ -1,25 +1,34 @@
 ====================================================== Index =====================================================
 
 Sections:
-    General                         General use information, basics of what the pipeline does and how to run with defaults
-    Naming Conventions              what to do/not do when naming your input fastq files (very important for automation)
-    Arguments                       description of the arguments that you need to pass with the script call(s) in your command line
-    Config                          information on config.yaml, how you can get the pipeline to run differently if you don't like the defaults, probably don't touch
-                                    config.yaml if you don't know a lot about the tools used in the pipeline
-    Testing                         where the test files in this repo came from and how to set up testing for the pipeline
+
+    General                         -General use information, basics of what the pipeline does and how to run with defaults
+
+    Naming Conventions              -What to do/not do when naming your input fastq files (very important for automation)
+                                        PLEASE read this section its short I promise
+
+    Arguments                       -Description of the arguments that you need to pass with the script call(s) in your 
+                                        command line
+
+    Config                          -Information on config.yaml, how you can get the pipeline to run differently if you don't 
+                                        like the defaults, probably don't touch config.yaml if you don't know a lot about the 
+                                        tools used in the pipeline
+
+    Testing                         -Where the test files in this repo came from and how to set up testing for the pipeline
 
 ===================================================== General ====================================================
 
 Pipeline to process bulk RNA sequencing data
-Built to be ran on HPC clusers with SLURM job handling for efficient processing, but can be ran locally as well, just keep in mind that STAR aligner uses a lot
-of memory so you need lots of extra memory and this will take a long time if you don't have a lot of processing power
+Built to be ran on HPC clusers with SLURM job handling for efficient processing, but can be ran locally as well, just keep in
+mind that STAR aligner uses a lot of memory so you need lots of extra memory and this will take a long time if you don't have 
+a lot of processing power
 Built for 2 read illumina sequencing
-PLEASE consult Naming Conventions section of readme at least before running
 
-You must also either place your genome fasta file and GTF file in the reference dir  of this pipeline (RNAseq_BULK), withe their names being set to "genome.fa" and "genes.gtf" 
-respectively, or specify the dir that these files are in and their names in the config.yaml before running the pipeline
+You must also either place your genome fasta file and GTF file in the reference dir of this pipeline (RNAseq_BULK) or specify the
+dir that these files are in, and put the name of the files (WITH extenstions) in the config.yaml file
 
 to run this pipeline with default parameters here are some example commands for different use cases
+MAKE SURE to activate your env before running launcher.py 
 
         NOTES:
 
@@ -73,7 +82,7 @@ launcher.py
         --root                  root arg to pass to main.py
         --indir                 indir arg to pass to main.py
         --steps                 steps arg to pass to main.py
-        --runScript             slurm (.sh) script that launcher is building
+        --runScript             slurm (.sh) script that launcher is building (run_pipeline.sh)
 
 run_pipeline.sh
 
@@ -137,7 +146,7 @@ Reference Configuration (-reference:)
 
 Tool Configuration (-tools:)
 
-    FastP Configuration (-tools.fastp)
+    FastP (-tools.fastp)
 
         -length_required
         Minimum read length after trimming. Reads shorter than this are removed.
@@ -276,6 +285,9 @@ Tool Configuration (-tools:)
 
 ====================================================== Testing =====================================================
 
-Test is split into two parts
-
-    1. FastP/STAR/SamTools
+Test data lives in the test_data dir of root
+it was downloaded from nf-core's github as specified in instructions.txt file found in test_data
+licence also included, but it basically says anyone can do whatever they want with the files
+just run the pipeline pointing config.yaml to the genes.gtf and genome.fa file in test_data using the reference section of
+config.yaml then run main.py on a set of files
+its basically an illumina 2 read dataset with read length 101 (so set your sjdbOverhang to 100 in config)

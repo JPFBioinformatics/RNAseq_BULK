@@ -17,14 +17,16 @@ class FeatureCountsWrapper:
     """
     wrapper class for featureCounts that produce text files for downstream analysis
     """
-    def __init__(self, cfg: ConfigLoader, root: Path):
+    def __init__(self, cfg: ConfigLoader, root: Path, sample_dir: Path):
         """
         Params:
             cfg                         ConfigLoader object that has loaded config.yaml for this project
             root                        Path to root project folder
+            sample_dir                  Directory to store sample data in
         """
         self.root = root
         self.cfg = cfg
+        self.sample_dir = Path(sample_dir)
 
     def count_features(self, bam_file: Path):
         """
@@ -33,7 +35,6 @@ class FeatureCountsWrapper:
             bam_file                    path to the bam file to be counted
         """
         # sample name
-        print(f"\nFeatureCounts input:/n{bam_file}")
         name = bam_file.stem.split("_Aligned")[0]
 
         # connect to config
@@ -42,7 +43,7 @@ class FeatureCountsWrapper:
         # get dirs
         project = cfg.get_path("project","name",base_path=self.root)
         ref_dir = cfg.get_path("reference","ref_dir",base_path=self.root)
-        sample_dir = project / name
+        sample_dir = self.sample_dir
         # make sure dirs exist
         for dir in [project,ref_dir,sample_dir]:
             dir.mkdir(parents=True,exist_ok=True)
@@ -59,7 +60,7 @@ class FeatureCountsWrapper:
 
 
         # build output file
-        out_file = sample_dir / f"counts.txt"
+        out_file = sample_dir / f"{name}_counts.txt"
 
         # build command
         cmd = [
@@ -86,11 +87,13 @@ class FeatureCountsWrapper:
 
         # log subprocess
         log_subprocess(result,sample_dir,"featureCounts")
-
+        
         # if we are not saving files then delete the input bam
-        if not save_files:
+        if out_file.exists() and not save_files:
             try:
                 bam_file.unlink()
+                print(f"FeatureCount successful, deleted input bam:\n{bam_file}\n")
             except Exception as e:
-                print(f"Warning, could not delete file {bam_file}\n{e}")
+                print(f"Warning, could not delete file:\n{bam_file}\nError:\n{e}\n")
+        
 

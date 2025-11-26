@@ -90,7 +90,7 @@ def main():
     run_dir.mkdir(parents=True,exist_ok=True)
 
     # create reference dir
-    ref_dir = run_dir / "reference"
+    ref_dir = root_dir / "reference"
     ref_dir.mkdir(parents=True,exist_ok=True)
 
     # get temp dir
@@ -112,9 +112,12 @@ def main():
 
     for r1,r2 in paired_samples:
         
-        # get name of the sample and its sample dir
+        # get name of the sample, create sample and log dirs in run dir
         name = find_name(r1,r2)
         sample_dir = run_dir / name
+        log_dir = sample_dir / "logs"
+        for entry in [sample_dir,log_dir]:
+            entry.mkdir(parents=True,exist_ok=True)
 
         # --------------------------
         # fastp
@@ -122,9 +125,10 @@ def main():
 
         if "trim" in args.steps:
             # generate QC object
-            qc = QCTrimmer(cfg,root_dir,temp_dir)
+            qc = QCTrimmer(cfg,root_dir,temp_dir,sample_dir)
             # run QC and trim
             trimmed_r1,trimmed_r2 = qc.run_fastp(r1,r2)
+            print(f"\nFastP copmlete\n")
 
         # --------------------------
         # STAR
@@ -140,29 +144,49 @@ def main():
                 index_builder.build_index()
 
             # instantiate aligner
-            aligner = STARAligner(cfg, root_dir, temp_dir)
+            aligner = STARAligner(cfg, root_dir, temp_dir, sample_dir)
             # input trimmed/untrimmed data based on user specifications and align
             if "trim" in args.steps:
                 aligned_file = aligner.align(trimmed_r1, trimmed_r2, cleanup=True)
             else:
                 aligned_file = aligner.align(r1,r2)
+            print(f"Align complete\n")
+
+            # copy star log files to sample dir
+            temp_sample_dir = temp_dir / name
+            for file in temp_sample_dir.iterdir():
+                if file.is_file() and "Log" in file.name:
+                    new_file = sample_dir / "logs" / f"STAR_{file.name}"
+                    try:
+                        shutil.copy(file, new_file)
+                    except Exception as e:
+                        print(f"Warning, could not copy file:\n{file.name}\nto:\n{sample_dir}\nError:\n{e}\n")
+                        continue
+                    try:
+                        file.unlink()
+                        print(f"STAR log copy successful, deleted origonal file:\n{file.name}\n")
+                    except Exception as e:
+                        print(f"Warning, could not delete origonal log file:\n{file}\nError:\n{e}\n")
+
 
         # --------------------------
         # samtools
         # --------------------------
+
         # need an aligned bam file for further processing
         if "align" in args.steps:
 
             # isntantiate wrapper
-            st = SamtoolsWrapper(cfg, root_dir, temp_dir)
+            st = SamtoolsWrapper(cfg, root_dir, temp_dir, sample_dir)
 
-            # sort and filter
+            # sort, filter, and index
             sorted_file = st.sort_file(aligned_file)
             clean_file = st.filter_file(sorted_file)
+            bam_idx = st.index_file(clean_file)
 
             # see if we are saving as a cram or bam
             save_type = cfg.get("project","save_type")
-
+           
             # save file/index to sample dir if specified
             if cfg.get("project","save_files"):
 
@@ -193,8 +217,6 @@ def main():
                 # if not cram then save bam/bai
                 else:
 
-                    # index bam file
-                    bam_idx = st.index_file(clean_file)
                     # save loation of new clean file
                     new_clean = sample_dir / clean_file.name
 
@@ -211,18 +233,19 @@ def main():
 
                     # update clean_file location
                     clean_file = new_clean
+            print(f"Samtools sort,filter, and/or index complete\n")
 
 
         # --------------------------
         # featureCounts
         # --------------------------
+
         if "count" in args.steps:
             # instantiate fc object
-            fc = FeatureCountsWrapper(cfg,root_dir)
+            fc = FeatureCountsWrapper(cfg, root_dir, sample_dir)
             # count features
             fc.count_features(clean_file)
-
-
+            print(f"FeatureCounts count complete\n")
 
 if __name__ == "__main__":
     main()

@@ -7,7 +7,9 @@ project:
   # make "True" if you want to keep intermediate BAM files for later use, otherwise they will be deleted after counts are generated
   save_files: False
   # "bam" if you want the program to save bam files, "cram" if you want the program to save cram files (compressed BAM for storage concerns), use with save_files: True
-  save_type: cram
+  save_type: bam
+  # name of your conda environment that you will be using
+  conda_env: rnaseq
 
 reference:
 # locations of ref files used in pipeline, placed within a reference dir that is under project_name dir
@@ -28,6 +30,8 @@ tools:
   fastp:
   # QC analysis and trimming of bad/short reads plus removing the adapter sequences
 
+    # wether or not to save inputs
+    save_inputs: True
     # minimum read length after trimming
     length_required: 30
     # Trim bases with Phred score < value, 20 = 1% error prob, 30 = 0.1% error prob, 10 = 10% error prob
@@ -47,9 +51,9 @@ tools:
 
     # keeps genome index in memory for aliging many samples
     # use LoadAndKeep if running multiple jobs sequentially on the same node, otherwise Load is safer (LoadAndKeep for local use typically)
-    genomeLoad: LoadAndRemove
+    genomeLoad: NoSharedMemory
     # Maximum number of multiple alignments, if a read maps to > value locations it is discarded
-    outFilterMultimapNmax: 20
+    outFilterMultimapNmax: 10
     # minimum match score of the read to the ref genome for alignment (0.2 means it must be an 80% match), optional we use star default by not specifying
     outFilterMismatchNoverLmax: 
     # output format and sorting method, we always sort with samtools (for downstream compatibility) so it is not needed here
@@ -59,7 +63,7 @@ tools:
     # type of file, zcat for zipped .gz files (preferred)
     file_type: zcat
     # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
-    sjdbOverhang: 75
+    sjdbOverhang: 100
     # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
     # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"

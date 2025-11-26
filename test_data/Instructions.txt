@@ -1,5 +1,5 @@
 downloaded from: 
     git clone https://github.com/nf-core/test-datasets.git --single-branch --branch rnaseq
 
-CLI call to use:
+For more information on dataset download it and read their README
 

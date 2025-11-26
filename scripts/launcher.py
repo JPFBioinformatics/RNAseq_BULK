@@ -55,9 +55,9 @@ def launcher():
     # Parse CLI arguments and load config
     # ---------------------------------------------------
 
+    # set up args/config and make sure config is fine
     args = parse_args()
     cfg = ConfigLoader(Path(args.root) / "config.yaml")
-    # check that cfg bools are properly formatted
     cfg.check_bools()
 
     # get run name and handle run dir
@@ -72,11 +72,10 @@ def launcher():
     if num_samples == 0:
         raise FileNotFoundError(f"No R1 fastq files found in {args.indir}")
 
-    # get max threads needed for job
+    # get cfg values
     max_threads = get_max_threads(cfg)
-    
-    # gets total memory needed for job
     total_mem = get_total_memory(cfg,max_threads)
+    conda_env = cfg.get("project","conda_env")
 
     # run script path
     run_script_path = shlex.quote(str(Path(args.root) / args.runScript))
@@ -97,7 +96,8 @@ def launcher():
         f"{run_script_path} "
         f"--root {shlex.quote(args.root)} "
         f"--indir {shlex.quote(args.indir)} "
-        f"--steps {steps}"
+        f"--steps {steps} "
+        f"--conda-env {shlex.quote(conda_env)}"
     )
 
     # run subprocess and log
