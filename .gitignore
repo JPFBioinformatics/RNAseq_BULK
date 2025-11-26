@@ -31,6 +31,8 @@ envs/
 .DS_Store
 *.swp
 *.git
+_STARtmp
+test_run
 
 # reference files
 reference/
