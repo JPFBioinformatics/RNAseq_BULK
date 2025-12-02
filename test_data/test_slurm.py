@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 Local test wrapper to simulate SLURM array execution for RNA-seq pipeline.
 It loops over all _R1 fastq files in the input directory and runs

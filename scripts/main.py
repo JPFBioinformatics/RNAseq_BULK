@@ -212,7 +212,7 @@ def main():
                         cram_file.unlink()
                         cram_idx.unlink()
                     except Exception as e:
-                        print(f"Warning: could not delete origonal file and index after samtools cleaning\n{e}")
+                        print(f"Warning: could not delete origonal file and index after samtools cleaning and conversion to CRAM\n{e}")
                 
                 # if not cram then save bam/bai
                 else:
@@ -235,7 +235,6 @@ def main():
                     clean_file = new_clean
             print(f"Samtools sort,filter, and/or index complete\n")
 
-
         # --------------------------
         # featureCounts
         # --------------------------
@@ -246,6 +245,13 @@ def main():
             # count features
             fc.count_features(clean_file)
             print(f"FeatureCounts count complete\n")
+
+        # delete star temp dir
+        strtmp = root_dir / "_STARtmp"
+        try:
+            strtmp.unlink()
+        except Exception as e:
+            print(f"Warning, could not delete _STARtmp folder after run")
 
 if __name__ == "__main__":
     main()

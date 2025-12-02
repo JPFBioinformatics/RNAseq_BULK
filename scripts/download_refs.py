@@ -1,3 +1,5 @@
+# region Imports
+
 import subprocess
 import sys
 from pathlib import Path
@@ -8,6 +10,8 @@ root_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root_dir))
 
 from src.config_loader import ConfigLoader
+
+# endregion
 
 """
 This script downlaods reference genome fa and gtf file for mice (mm39) from UCSC genome browser and unzips them for use

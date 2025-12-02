@@ -16,10 +16,10 @@ reference:
   # name of dir that genome fasta and gtf file are in, and wher star_index will be built
   ref_dir: reference
   # name/url of ref genome
-  genome_fasta: genome.fa
+  genome_fasta: mm39.fa
   genome_url: ftp://hgdownload.soe.ucsc.edu/goldenPath/mm39/bigZips/mm39.fa.gz
   # name/url of ref gtf file
-  gtf_file: genes.gtf
+  gtf_file: mm39.ncbiRefSeq.gtf
   gtf_url: ftp://hgdownload.soe.ucsc.edu/goldenPath/mm39/bigZips/genes/mm39.ncbiRefSeq.gtf.gz
   # name to be used for the star_index dir
   star_index: star_index/
@@ -63,7 +63,7 @@ tools:
     # type of file, zcat for zipped .gz files (preferred)
     file_type: zcat
     # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
-    sjdbOverhang: 100
+    sjdbOverhang: 75
     # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
     # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"
