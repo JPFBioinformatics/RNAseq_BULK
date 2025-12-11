@@ -1,7 +1,7 @@
 # region Imports
 
 from pathlib import Path
-import argparse,shutil,sys
+import argparse,shutil,sys,json
 
 # location of pipeline root dir
 root_dir = Path(__file__).resolve().parent.parent
@@ -14,6 +14,7 @@ from src.fastp_wrapper import QCTrimmer
 from src.star_wrapper import STARIndexBuilder, STARAligner
 from src.samtools_wrapper import SamtoolsWrapper
 from src.featureCounts_wrapper import FeatureCountsWrapper
+from src.counts import Counts
 
 # endregion
 
@@ -252,6 +253,18 @@ def main():
             strtmp.unlink()
         except Exception as e:
             print(f"Warning, could not delete _STARtmp folder after run")
+
+    # now summarize counts
+    summarizer = Counts(root_dir,cfg)
+    summarizer.summarize_counts()
+
+    # delete temp dir files
+    for item in temp_dir.iterdir():
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
 
 if __name__ == "__main__":
     main()
