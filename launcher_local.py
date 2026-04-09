@@ -1,7 +1,11 @@
 # region Imports
 
 from pathlib import Path
+<<<<<<< HEAD
 import sys, argparse, subprocess, time, logging, os
+=======
+import sys, argparse, subprocess, time, logging
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 
 # location of pipeline root dir
 root_dir = Path(__file__).resolve().parent
@@ -9,7 +13,10 @@ root_dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(root_dir))
 
 from src.config_loader import ConfigLoader
+<<<<<<< HEAD
 from src.counts import Counts
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 
 # endregion
 
@@ -45,6 +52,7 @@ def parse_args():
         help="Maximum number of samples to run in parallel (default: 3)"
     )
 
+<<<<<<< HEAD
     parser.add_argument(
         "--python",
         default="/mnt/rds/genetics02/DrummLab/jpf85/.conda/envs/rnaseq/bin/python",
@@ -53,6 +61,11 @@ def parse_args():
 
     return parser.parse_args()
 
+=======
+    return parser.parse_args()
+
+
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 def find_sample_pairs(indir: Path):
     """
     Finds all R1/R2 fastq pairs in the input directory
@@ -78,6 +91,10 @@ def find_sample_pairs(indir: Path):
 
     return pairs
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 def setup_logging(root: Path):
     """
     Sets up logging to both console and a launcher log file
@@ -93,7 +110,12 @@ def setup_logging(root: Path):
     )
     return logging.getLogger(__name__)
 
+<<<<<<< HEAD
 def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir: Path, python_path: Path):
+=======
+
+def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir: Path):
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
     """
     Launches main.py for a single sample pair as a background subprocess
     Params:
@@ -103,7 +125,10 @@ def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir
         r2              Path to R2 fastq file
         steps           list of steps to run
         log_dir         Path to directory to write sample log to
+<<<<<<< HEAD
         python_path     Path to the conda env's python
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
     Returns:
         subprocess.Popen object
     """
@@ -113,7 +138,11 @@ def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir
 
     # build command
     cmd = [
+<<<<<<< HEAD
         str(python_path), str(root / "scripts" / "main.py"),
+=======
+        "python", str(root / "scripts" / "main.py"),
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
         "--root", str(root),
         "--indir", str(indir),
         "--sample1", r1.name,
@@ -121,11 +150,14 @@ def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir
         "--steps", *steps
     ]
 
+<<<<<<< HEAD
     # pass conda bin dir in PATH so fastp, STAR etc... are found in the proper location
     conda_bin = str(python_path.parent)
     env = os.environ.copy()
     env["PATH"] = conda_bin + ":" + env.get("PATH","")
 
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
     # open log file for this sample
     log_handle = open(log_file, "w")
 
@@ -133,12 +165,20 @@ def run_sample(root: Path, indir: Path, r1: Path, r2: Path, steps: list, log_dir
     process = subprocess.Popen(
         cmd,
         stdout=log_handle,
+<<<<<<< HEAD
         stderr=log_handle,
         env=env
+=======
+        stderr=log_handle
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
     )
 
     return process, log_handle, sample_name
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 def launcher():
     """
     Main launcher function - finds all sample pairs and runs them in parallel batches
@@ -152,7 +192,10 @@ def launcher():
     root = Path(args.root)
     indir = Path(args.indir)
     cfg = ConfigLoader(root / "config.yaml")
+<<<<<<< HEAD
     python_path = Path(args.python)
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 
     # ---------------------------------------------------
     # Set up logging
@@ -203,7 +246,11 @@ def launcher():
             logger.info(f"Starting sample {completed + failed + len(active_jobs) + 1}/{total}: {sample_name}")
 
             process, log_handle, name = run_sample(
+<<<<<<< HEAD
                 root, indir, r1, r2, args.steps, sample_logs_dir, python_path
+=======
+                root, indir, r1, r2, args.steps, sample_logs_dir
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
             )
             active_jobs.append((process, log_handle, name))
 
@@ -243,12 +290,16 @@ def launcher():
     logger.info(f"  Failed:    {failed}/{total}")
     logger.info("=" * 60)
 
+<<<<<<< HEAD
     # check how many samples failed
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
     if failed > 0:
         logger.warning(f"{failed} samples failed - check logs in {sample_logs_dir}")
     else:
         logger.info("All samples completed successfully!")
 
+<<<<<<< HEAD
     # plot pca if successful
     if completed > 0:
         logger.info("Running count summarization and PCA...")
@@ -256,6 +307,8 @@ def launcher():
         counter.preprocess_pipeline()
     else:
         logger.error("No samples completed - skipping summarization")
+=======
+>>>>>>> 4b05d6bb8a238ecc81539a6154592e6f800d1ff6
 
 if __name__ == "__main__":
     launcher()
