@@ -3,7 +3,7 @@
 project:
 # project info
   # name of your run
-  name: test_run
+  name: First_Run
   # make "True" if you want to keep intermediate BAM files for later use, otherwise they will be deleted after counts are generated
   save_files: False
   # "bam" if you want the program to save bam files, "cram" if you want the program to save cram files (compressed BAM for storage concerns), use with save_files: True
@@ -63,7 +63,7 @@ tools:
     # type of file, zcat for zipped .gz files (preferred)
     file_type: zcat
     # set to read length -1, defines how far splice jucntion sequences extend on each side changes depending on how you produce data
-    sjdbOverhang: 100
+    sjdbOverhang: 75
     # maximum length of intron allowed when mapping reads, 1,000,000 is standard for mammals
     alignIntronMax: 1000000
     # optional saves unmapped reads within the BAM file if "Within" or to a seperate FastQ if "Fastx"
@@ -81,9 +81,9 @@ tools:
     # minimum map quality
     minMapQuality: 20
     # first filtering parameter, 0x2 removes unproperly paired reads leave blank/False to not use
-    filter1: 0x2
+    filter_f: 0x2
     # second filtering parameter, 0x4 removes unmapped, 0x400 removes duplicate reads, and 0x404 removes both unmapped and duplicates leave blank/False to not use
-    filter2: 0x404
+    filter_F: 0x404
     
     # optional, for use if you want to look at a specific chromosome (chr1 is a chromosome 1, chr2 is chromosome 2 etc...)
     chromosome: False

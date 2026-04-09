@@ -56,7 +56,7 @@ class ConfigLoader:
             tool_name:             string name of the tool, such as "star" or "fastqc"
         """
         # threads listed in yaml
-        threads = self.get("params", tool_name, "threads", default=1)
+        threads = self.get("tools", tool_name, "threads", default=1)
         # if SLURM specifies a number of threads override at runtime
         threads = int(os.environ.get("SLURM_CPUS_PER_TASK", threads))
 

@@ -27,6 +27,7 @@ class FeatureCountsWrapper:
         self.root = root
         self.cfg = cfg
         self.sample_dir = Path(sample_dir)
+        self.env_path = str(Path(sys.executable).parent/"featureCounts")
 
     def count_features(self, bam_file: Path):
         """
@@ -64,7 +65,7 @@ class FeatureCountsWrapper:
 
         # build command
         cmd = [
-            "featureCounts",
+            self.env_path,
             "-T", str(threads),
             "-s", str(strand),
             "-t", str(feature_type),
@@ -77,7 +78,7 @@ class FeatureCountsWrapper:
         if ignoreDup:
             cmd.append("--ignoreDup")
         if isPairedEnd:
-            cmd.append("-p")
+            cmd.extend(["-p","--countReadPairs"])
 
         # append the input file
         cmd.append(str(bam_file))

@@ -28,6 +28,7 @@ class STARIndexBuilder:
         self.root = Path(root)
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
+        self.env_path = str(Path(sys.executable).parent/"STAR")
 
     def build_index(self):
         """
@@ -53,7 +54,7 @@ class STARIndexBuilder:
 
         # build command
         cmd = [
-            "STAR",
+            self.env_path,
             "--runThreadN", str(threads), 
             "--runMode", "genomeGenerate",
             "--genomeDir", str(idx_dir),
@@ -84,6 +85,7 @@ class STARAligner:
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
         self.sample_dir = Path(sample_dir)
+        self.env_path = str(Path(sys.executable).parent/"STAR")
 
     def align(self, r1: Path, r2: Path, cleanup=False):
         """
@@ -133,7 +135,7 @@ class STARAligner:
 
         # build command
         cmd = [
-            "STAR",
+            self.env_path,
             "--runThreadN", str(threads),
             "--genomeDir", str(star_index),
             "--readFilesIn", str(r1), str(r2),

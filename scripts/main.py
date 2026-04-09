@@ -241,9 +241,12 @@ def main():
         # --------------------------
 
         if "count" in args.steps:
-            # instantiate fc object
+            if "align" not in args.steps:
+                bam_files = list(sample_dir.glob("*.bam"))
+                if not bam_files:
+                    raise FileNotFoundError(f"No BAM file found at {sample_dir}")
+                clean_file = bam_files[0]
             fc = FeatureCountsWrapper(cfg, root_dir, sample_dir)
-            # count features
             fc.count_features(clean_file)
             print(f"FeatureCounts count complete\n")
 
@@ -254,16 +257,15 @@ def main():
         except Exception as e:
             print(f"Warning, could not delete _STARtmp folder after run")
 
-    # now summarize counts
-    summarizer = Counts(root_dir,cfg)
-    summarizer.summarize_counts()
-
     # delete temp dir files
     for item in temp_dir.iterdir():
         if item.is_dir():
-            shutil.rmtree(item)
+            shutil.rmtree(item, ignore_errors=True)
         else:
-            item.unlink()
+            try:
+                item.unlink()
+            except Exception as e:
+                print(f"Warning, could not dlete temp file {item}: {e}")
 
 
 if __name__ == "__main__":

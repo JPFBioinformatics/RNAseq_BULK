@@ -30,6 +30,7 @@ class QCTrimmer:
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
         self.sample_dir = Path(sample_dir)
+        self.env_path = str(Path(sys.executable).parent/"fastp")
 
     def run_fastp(self, r1_in: Path, r2_in: Path):
         """
@@ -71,7 +72,7 @@ class QCTrimmer:
 
         # build fastp command, ensuring that any Path objects are converted to str
         cmd = [
-            "fastp",
+            self.env_path,
             "-i", str(r1_in),
             "-I", str(r2_in),
             "-o", str(r1_out),
@@ -110,3 +111,4 @@ class QCTrimmer:
 
         # return location of temp trimmed files
         return r1_out, r2_out
+

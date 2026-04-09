@@ -35,6 +35,7 @@ class SamtoolsWrapper:
         self.cfg = cfg
         self.temp_dir = Path(temp_dir)
         self.sample_dir = Path(sample_dir)
+        self.env_path = str(Path(sys.executable).parent/"samtools")
 
     def sort_file(self, file: Path):
         """
@@ -72,7 +73,7 @@ class SamtoolsWrapper:
 
         # build command
         cmd = [
-            "samtools",
+            self.env_path,
             "sort",
             "-@", str(threads),
             "-m", str(sortMemory),
@@ -133,7 +134,7 @@ class SamtoolsWrapper:
 
         # build command
         cmd = [
-            "samtools",
+            self.env_path,
             "index",
             "-@", str(threads),
             "-o", str(out_file),
@@ -189,7 +190,7 @@ class SamtoolsWrapper:
 
         # build base command
         cmd  = [
-            "samtools",
+            self.env_path,
             "view",
             "-b",
             "-@", str(threads),
@@ -199,9 +200,9 @@ class SamtoolsWrapper:
 
         # append additional filters if specified
         if filter_f:
-            cmd.extend(["-f",filter_f])
+            cmd.extend(["-f",str(filter_f)])
         if filter_F:
-            cmd.extend(["-F", filter_F])
+            cmd.extend(["-F",str(filter_F)])
 
         # append input file
         cmd.append(str(file))
@@ -246,7 +247,7 @@ class SamtoolsWrapper:
 
         # build command
         cmd = [
-            "samtools",
+            self.env_path,
             "flagstat",
             str(file)
         ]
@@ -285,7 +286,7 @@ class SamtoolsWrapper:
 
         # build command
         cmd = [
-            "samtools",
+            self.env_path,
             "view",
             "-C",
             "-T", str(ref_fasta),

@@ -15,3 +15,6 @@ dependencies:
   - pyyaml
   - numpy
   - ncurses
+  - matplotlib
+  - scikit-learn
+  - scipy

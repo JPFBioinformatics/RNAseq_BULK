@@ -61,6 +61,17 @@ python main.py \
 
 for any of these 
 
+for Intron/cluster with no batch handling (SLURM etc...) we can use local_launcher.py
+
+nohup python launcher_local.py \
+  --root /mnt/rds/genetics02/DrummLab/jpf85/RNAseq_BULK \
+  --indir /mnt/rds/genetics02/DrummLab/jpf85/Raw_DATA \
+  --max_parallel 3 > launcher_output.txt 2>&1 &
+
+tail -f launcher_output.txt
+
+This allows us to run it even if we get disconnected, tail is just to monitor
+
 ================================================ Naming Conventions ================================================
 
     DO NOT:
